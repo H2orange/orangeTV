@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07090D">
+<title>Orange TV · 源配置</title>
+<style>
+  :root{
+    --bg:#07090D; --card:#12161F; --field:#0C1017;
+    --line:rgba(255,255,255,.09);
+    --text:#F2F4F8; --muted:#8C96A8; --dim:#5C6577;
+    --accent:#FF8256; --on-accent:#1A0A05;
+    --ok:#4ADE80; --fail:#EF6B6B; --unknown:#7C8698;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0}
+  body{
+    background:radial-gradient(900px 480px at 50% -18%, rgba(255,130,86,.18), transparent 62%), var(--bg);
+    color:var(--text); min-height:100vh; padding:0 18px 188px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  header{padding:26px 2px 18px; display:flex; align-items:center; gap:12px}
+  .logo{
+    width:38px;height:38px;border-radius:12px;background:var(--accent);color:var(--on-accent);
+    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:19px;flex:none;
+    box-shadow:0 8px 24px -8px rgba(255,130,86,.8);
+  }
+  .name{font-size:16px;font-weight:600;letter-spacing:.2px}
+  .sub{font-size:12px;color:var(--dim);margin-top:2px}
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:18px;
+    padding:18px 16px 16px; margin-bottom:14px;
+  }
+  .row{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+  h2{font-size:15px;font-weight:600;margin:0}
+  .tag{
+    font-size:11px;color:var(--accent);background:rgba(255,130,86,.12);
+    border-radius:20px;padding:3px 9px;letter-spacing:.3px;
+  }
+  .hint{font-size:12px;color:var(--dim);line-height:1.6;margin:6px 0 12px}
+  textarea{
+    width:100%; resize:vertical; min-height:92px;
+    background:var(--field); color:var(--text);
+    border:1px solid var(--line); border-radius:12px;
+    padding:12px; font-size:13px; line-height:1.7;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    outline:none;
+  }
+  textarea:focus{border-color:rgba(255,130,86,.55); box-shadow:0 0 0 3px rgba(255,130,86,.12)}
+  .list{margin-top:12px; display:flex; flex-direction:column; gap:2px}
+  .item{display:flex;gap:10px;align-items:flex-start;padding:9px 2px;border-top:1px solid rgba(255,255,255,.05)}
+  .item:first-child{border-top:none}
+  .dot{width:8px;height:8px;border-radius:50%;margin-top:6px;flex:none;background:var(--unknown)}
+  .dot.ok{background:var(--ok);box-shadow:0 0 8px rgba(74,222,128,.55)}
+  .dot.fail{background:var(--fail)}
+  .dot.unknown{background:var(--unknown)}
+  .item-body{min-width:0;flex:1}
+  .item-title{font-size:13px;color:var(--text);line-height:1.5}
+  .item-url{
+    font-size:11px;color:var(--dim);margin-top:3px;line-height:1.5;
+    font-family:ui-monospace,Menlo,Consolas,monospace;
+    word-break:break-all;
+  }
+  .empty{font-size:12px;color:var(--dim);padding:10px 2px 2px}
+  .bar{
+    position:fixed;left:0;right:0;bottom:0;z-index:20;
+    display:flex;gap:10px;padding:14px 18px calc(14px + env(safe-area-inset-bottom));
+    background:linear-gradient(to top, rgba(7,9,13,.98) 55%, rgba(7,9,13,0));
+  }
+  button{
+    flex:1;border:none;border-radius:14px;padding:15px 10px;
+    font-size:15px;font-weight:600;font-family:inherit;
+  }
+  button.primary{background:var(--accent);color:var(--on-accent);flex:1.6}
+  button.ghost{background:rgba(255,255,255,.07);color:var(--text);border:1px solid var(--line)}
+  button:active{transform:scale(.985)}
+  .toast{
+    position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(8px);
+    background:#1D2330;border:1px solid var(--line);color:var(--text);
+    font-size:13px;padding:11px 18px;border-radius:12px;
+    opacity:0;pointer-events:none;transition:.22s;max-width:86vw;text-align:center;z-index:30;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .toast.bad{border-color:rgba(239,107,107,.5);color:#FFC9C9}
+  footer{font-size:11px;color:var(--dim);line-height:1.8;padding:6px 3px 24px;text-align:center}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">O</div>
+  <div>
+    <div class="name">Orange TV</div>
+    <div class="sub">源配置 · 保存后电视端立即生效</div>
+  </div>
+</header>
+
+<main>
+  <section class="card">
+    <div class="row"><h2>直播源</h2><span class="tag">M3U / TXT</span></div>
+    <p class="hint">每行一个地址。也可以写成「名称 | 地址」，按填写顺序探活，第一个可用的会被采用。</p>
+    <textarea id="live" rows="4" spellcheck="false" autocapitalize="off"
+              autocomplete="off" placeholder="客厅 IPTV | http://example.com/iptv.m3u"></textarea>
+    <div class="list" id="live-list"></div>
+  </section>
+
+  <section class="card">
+    <div class="row"><h2>点播源</h2><span class="tag">接口地址</span></div>
+    <p class="hint">每行一个地址。点播源需要实现 App 里定义的接口，未配置时首页使用内置演示数据。</p>
+    <textarea id="vod" rows="3" spellcheck="false" autocapitalize="off"
+              autocomplete="off" placeholder="http://192.168.1.10:8080"></textarea>
+    <div class="list" id="vod-list"></div>
+  </section>
+
+  <footer>
+    配置只保存在这台电视本地。<br>
+    App 不会联网搜索或猜测新地址，换源时请在这里手动更新。
+  </footer>
+</main>
+
+<div class="bar">
+  <button class="ghost" id="probe">重新探活</button>
+  <button class="primary" id="save">保存并同步</button>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  var TOKEN = '';
+  try {
+    TOKEN = new URLSearchParams(location.search).get('t') || '';
+  } catch (err) {
+    TOKEN = '';
+  }
+
+  var liveEl = document.getElementById('live');
+  var vodEl = document.getElementById('vod');
+  var toastEl = document.getElementById('toast');
+  var filled = false;
+
+  function api(path, options) {
+    var url = path + '?t=' + encodeURIComponent(TOKEN);
+    return fetch(url, options).then(function (res) {
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.json();
+    });
+  }
+
+  function toast(text, bad) {
+    toastEl.textContent = text;
+    toastEl.className = 'toast show' + (bad ? ' bad' : '');
+    clearTimeout(toast.timer);
+    toast.timer = setTimeout(function () { toastEl.className = 'toast'; }, 2600);
+  }
+
+  // 一行 = 一个地址，支持「名称 | 地址」
+  function parseLines(text) {
+    var out = [];
+    text.split('\n').forEach(function (line) {
+      var value = line.trim();
+      if (!value) return;
+      var name = '';
+      var url = value;
+      var cut = value.indexOf('|');
+      if (cut > 0) {
+        name = value.slice(0, cut).trim();
+        url = value.slice(cut + 1).trim();
+      }
+      if (url.indexOf('http') !== 0) return;
+      out.push({ name: name, url: url });
+    });
+    return out;
+  }
+
+  function linesOf(list) {
+    return (list || []).map(function (it) {
+      return it.name ? it.name + ' | ' + it.url : it.url;
+    }).join('\n');
+  }
+
+  function renderList(target, list, emptyText) {
+    target.innerHTML = '';
+    if (!list || !list.length) {
+      var empty = document.createElement('div');
+      empty.className = 'empty';
+      empty.textContent = emptyText;
+      target.appendChild(empty);
+      return;
+    }
+    list.forEach(function (it) {
+      var row = document.createElement('div');
+      row.className = 'item';
+
+      var dot = document.createElement('i');
+      dot.className = 'dot ' + it.state;
+      row.appendChild(dot);
+
+      var body = document.createElement('div');
+      body.className = 'item-body';
+
+      var title = document.createElement('div');
+      title.className = 'item-title';
+      title.textContent = (it.name || '未命名') + ' · ' + it.detail;
+
+      var url = document.createElement('div');
+      url.className = 'item-url';
+      url.textContent = it.url;
+
+      body.appendChild(title);
+      body.appendChild(url);
+      row.appendChild(body);
+      target.appendChild(row);
+    });
+  }
+
+  function apply(state, fillText) {
+    renderList(document.getElementById('live-list'), state.live,
+      '还没有配置直播源，内置演示频道仍可播放');
+    renderList(document.getElementById('vod-list'), state.vod,
+      '还没有配置点播源，首页使用内置演示数据');
+
+    if (fillText && !filled) {
+      liveEl.value = linesOf(state.live);
+      vodEl.value = linesOf(state.vod);
+      filled = true;
+    }
+  }
+
+  function refresh(fillText) {
+    api('api/state').then(function (state) {
+      apply(state, fillText);
+    }).catch(function (err) {
+      // 首次加载失败时不弹提示：直接用空白表单，用户填完保存即可
+      if (!fillText) toast('读取状态失败：' + err.message, true);
+    });
+  }
+
+  document.getElementById('save').addEventListener('click', function () {
+    var payload = {
+      live: parseLines(liveEl.value),
+      vod: parseLines(vodEl.value)
+    };
+    toast('正在保存…');
+    api('api/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).then(function (state) {
+      filled = true;
+      apply(state, false);
+      toast('已同步到电视，正在探活');
+      setTimeout(function () { refresh(false); }, 1500);
+      setTimeout(function () { refresh(false); }, 3200);
+    }).catch(function (err) {
+      toast('保存失败：' + err.message, true);
+    });
+  });
+
+  document.getElementById('probe').addEventListener('click', function () {
+    toast('重新探活中…');
+    api('api/probe', { method: 'POST' }).then(function (state) {
+      apply(state, false);
+      toast('探活完成');
+      setTimeout(function () { refresh(false); }, 1600);
+    }).catch(function (err) {
+      toast('探活失败：' + err.message, true);
+    });
+  });
+
+  refresh(true);
+  setInterval(function () { refresh(false); }, 8000);
+})();
+</script>
+</body>
+</html>

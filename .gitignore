@@ -1,0 +1,20 @@
+# 构建产物
+.gradle/
+build/
+app/build/
+*.apk
+*.aab
+
+# IDE
+.idea/
+*.iml
+.kotlin/
+captures/
+
+# 本机环境
+local.properties
+.DS_Store
+
+# 签名
+*.keystore
+*.jks
